@@ -447,7 +447,7 @@ function perform_step!(integrator,cache::QNDF2ConstantCache,repeat_step=false)
     D[2] = D[1] - (uprev2 - uprev3)
     if ρ != 1
       R = new_R2(k,ρ,cache)
-      R = R * U
+      R = cache.R = R * U
       D[1] = D[1] * R[1,1] + D[2] * R[2,1]
       D[2] = D[1] * R[1,2] + D[2] * R[2,2]
     end
@@ -542,7 +542,7 @@ function perform_step!(integrator,cache::QNDF2Cache,repeat_step=false)
     @. D[2] = D[1] - (uprev2 - uprev3)
     if ρ != 1
       R = new_R2(k,ρ,cache)
-      R = R * U
+      R = cache.R = R * U
       @. D[1] = D[1] * R[1,1] + D[2] * R[2,1]
       @. D[2] = D[1] * R[1,2] + D[2] * R[2,2]
     end
@@ -633,7 +633,7 @@ function perform_step!(integrator,cache::QNDFConstantCache,repeat_step=false)
       if ρ != 1
         U = new_U(k,cache)
         R = new_R(k,ρ,cache)
-        R = R * U
+        R = cache.R = R * U
         reinterpolate_history!(cache,D,R,k)
       end
     else
@@ -654,9 +654,9 @@ function perform_step!(integrator,cache::QNDFConstantCache,repeat_step=false)
   u₀ = uprev + sum(D)  # u₀ is predicted value
   ϕ = zero(γ)
   for i = 1:k
-    ϕ += γₖ[i]*D[i]
+    ϕ = @. ϕ + γₖ[i]*D[i]
   end
-  ϕ *= γ
+  ϕ = @. γ*ϕ
   nlcache.tmp = u₀ - ϕ
   γdt = γ*dt
   typeof(nlsolve!) <: NLNewton && ( nlcache.W = calc_W!(integrator, cache, γdt, repeat_step) )
@@ -703,11 +703,11 @@ function perform_step!(integrator,cache::QNDFConstantCache,repeat_step=false)
       utildep1 = (κ*γₖ[k+1] + inv(k+2)) * δ
       atmpp1 = calculate_residuals(utildep1, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm)
       errp1 = integrator.opts.internalnorm(atmpp1)
-      pass = stepsize_and_ordeR = new_R(cache, integrator.EEst, errm1, errp1, dt, k)
+      pass = stepsize_and_order!(cache, integrator.EEst, errm1, errp1, dt, k)
       if pass == false
         cache.c = cache.c + 1
         fill!(D, zero(u)); fill!(D2, zero(u))
-        fill!(R, zero(t)); fill!(U, zero(t))
+        cache.R = zero(R); cache.U = zero(U)
         return
       end
       cache.c = 0
@@ -720,7 +720,7 @@ function perform_step!(integrator,cache::QNDFConstantCache,repeat_step=false)
   dts[1] = dt
   udiff[1] = u - uprev
   fill!(D, zero(u)); fill!(D2, zero(u))
-  fill!(R, zero(t)); fill!(U, zero(t))
+  cache.R = zero(R); cache.U = zero(U)
 
   nlcache.ηold = η
   nlcache.nl_iters = iter
@@ -770,7 +770,7 @@ function perform_step!(integrator,cache::QNDFCache,repeat_step=false)
       if ρ != 1
         U = new_U(k,cache)
         R = new_R(k,ρ,cache)
-        R = R * U
+        R = cache.R = R * U
         reinterpolate_history!(cache,D,R,k)
       end
     else
@@ -845,7 +845,7 @@ function perform_step!(integrator,cache::QNDFCache,repeat_step=false)
       @. utilde = (κ*γₖ[k+1] + inv(k+2)) * tmp
       calculate_residuals!(atmp, utilde, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm)
       errp1 = integrator.opts.internalnorm(atmp)
-      pass = stepsize_and_ordeR = new_R(cache, integrator.EEst, errm1, errp1, dt, k)
+      pass = stepsize_and_order!(cache, integrator.EEst, errm1, errp1, dt, k)
       if pass == false
         for i = 1:5
           fill!(D[i], zero(eltype(u)))

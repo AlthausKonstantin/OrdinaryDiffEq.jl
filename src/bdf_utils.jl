@@ -16,17 +16,17 @@ end
 
 function new_R1(k, ρ, cache)
   @unpack R = cache
-  cache.R = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:1, r=1:1]
+  cache.R = @SMatrix [r>k || j>k ? zero(eltype(R)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:1, r=1:1]
 end
 
 function new_R2(k, ρ, cache)
   @unpack R = cache
-  cache.R = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:2, r=1:2]
+  cache.R = @SMatrix [r>k || j>k ? zero(eltype(R)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:2, r=1:2]
 end
 
 function new_R(k, ρ, cache)
   @unpack R = cache
-  cache.R = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:5, r=1:5]
+  cache.R = @SMatrix [r>k || j>k ? zero(eltype(R)) : (j==1 ? -r * ρ : R[j-1,r] * ((j-1) - r * ρ)/j) for j=1:5, r=1:5]
 end
 
 # This functions takes help of D2 array to create backward differences array D
@@ -67,7 +67,7 @@ function reinterpolate_history!(cache, D, R, k)
   if typeof(cache) <: OrdinaryDiffEqMutableCache
     fill!(tmp,zero(eltype(D[1])))
   else
-    tmp = zero(eltype(D))
+    tmp = map(zero, D[1])
   end
   for j = 1:k
     for k = 1:k
@@ -82,7 +82,7 @@ function reinterpolate_history!(cache, D, R, k)
       fill!(tmp,zero(eltype(D[1])))
     else
       D[j] = tmp
-      tmp = zero(eltype(D))
+      tmp = map(zero, D[1])
     end
   end
 end

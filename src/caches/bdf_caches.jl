@@ -145,7 +145,7 @@ end
 @cache mutable struct QNDF1ConstantCache{F,N,coefType,coefType1,dtType,uType} <: OrdinaryDiffEqConstantCache
   uf::F
   nlsolve::N
-  D::coefType
+  D::coefType1
   D2::coefType1
   R::coefType
   U::coefType
@@ -187,7 +187,8 @@ function alg_cache(alg::QNDF1,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   R = @SMatrix zeros(typeof(t),1,1)
   U = @SMatrix zeros(typeof(t),1,1)
 
-  U = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:1, r = 1:1]
+  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:1, r = 1:1]
+  U = float.(U)
   γ, c = zero(inv((1-alg.kappa))), 1
   @oopnlsolve
 
@@ -204,7 +205,8 @@ function alg_cache(alg::QNDF1,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   D[1] = similar(u)
   D2[1] = similar(u); D2[2] = similar(u)
 
-  U = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:1, r = 1:1]
+  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:1, r = 1:1]
+  U = float.(U)
 
   atmp = similar(u,uEltypeNoUnits)
   utilde = similar(u)
@@ -270,7 +272,7 @@ function alg_cache(alg::QNDF2,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   R = @SMatrix zeros(typeof(t),2,2)
   U = @SMatrix zeros(typeof(t),2,2)
 
-  U = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
+  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
 
   γ, c = zero(inv((1-alg.kappa))), 1
   @oopnlsolve
@@ -287,7 +289,7 @@ function alg_cache(alg::QNDF2,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   D[1] = similar(u); D[2] = similar(u)
   D2[1] = similar(u);  D2[2] = similar(u); D2[3] = similar(u)
 
-  U = @SMatrix [r>k || j>k ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
+  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
 
   atmp = similar(u,uEltypeNoUnits)
   utilde = similar(u)
@@ -311,7 +313,7 @@ end
   U::coefType1
   order::Int64
   max_order::Int64
-  udiff::uType
+  udiff::coefType3
   dts::dtsType
   tmp::uType
   h::dtType
@@ -348,13 +350,13 @@ end
 
 function alg_cache(alg::QNDF,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits,uprev,uprev2,f,t,dt,reltol,p,calck,::Type{Val{false}})
   @oopnlcachefields
-  udiff = fill(zero(typeof(u)), 1, 6)
+  udiff = [map(zero, u) for i in 1:1, j in 1:6]
   dts = fill(zero(typeof(dt)), 1, 6)
   h = zero(dt)
   tmp = zero(u)
 
-  D = fill(zero(typeof(u)), 1, 5)
-  D2 = fill(zero(typeof(u)), 6, 6)
+  D = [map(zero, u) for i in 1:1, j in 1:5]
+  D2 = [map(zero, u) for i in 1:6, j in 1:6]
   R = @SMatrix zeros(typeof(t),5,5)
   U = @SMatrix zeros(typeof(t),5,5)
 
