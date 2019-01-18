@@ -272,7 +272,7 @@ function alg_cache(alg::QNDF2,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   R = @SMatrix zeros(typeof(t),2,2)
   U = @SMatrix zeros(typeof(t),2,2)
 
-  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
+  U = @SMatrix [r>2 || j>2 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
 
   γ, c = zero(inv((1-alg.kappa))), 1
   @oopnlsolve
@@ -289,7 +289,7 @@ function alg_cache(alg::QNDF2,u,rate_prototype,uEltypeNoUnits,uBottomEltypeNoUni
   D[1] = similar(u); D[2] = similar(u)
   D2[1] = similar(u);  D2[2] = similar(u); D2[3] = similar(u)
 
-  U = @SMatrix [r>1 || j>1 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
+  U = @SMatrix [r>2 || j>2 ? zero(eltype(U)) : (j==1 ? -r : U[j-1,r] * ((j-1) - r)/j) for j = 1:2, r = 1:2]
 
   atmp = similar(u,uEltypeNoUnits)
   utilde = similar(u)
